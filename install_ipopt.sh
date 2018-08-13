@@ -32,8 +32,8 @@ cd $srcdir/ThirdParty/ASL
 ./get.ASL
 
 # MUMPS
-cd $srcdir/ThirdParty/Mumps
-./get.Mumps
+#cd $srcdir/ThirdParty/Mumps
+#./get.Mumps
 
 # build everything
 cd $srcdir
