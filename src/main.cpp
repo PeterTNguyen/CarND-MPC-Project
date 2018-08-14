@@ -115,18 +115,21 @@ int main() {
           // order 1 is sufficient.
           auto coeffs = polyfit(ptsx_vec, ptsy_vec, 3);
 
+          double v_ms = v*1609.0/3600.0;
+          double x_latency = fabs(v_ms*0.105);
           // The cross track error is calculated by evaluating at polynomial at x, f(x)
           // and subtracting y.
-          double cte = polyeval(coeffs, 0);
+          double cte = polyeval(coeffs, x_latency);
 
           // Due to the sign starting at 0, the orientation error is -f'(x).
           // derivative of coeffs[0] + coeffs[1] * x -> coeffs[1]
-          double epsi = -atan(coeffs[1] + 2.0*coeffs[2]*ptsx[0] 
-              + 3.0*coeffs[3]*ptsx[0]*ptsx[0]);
+          double epsi = -atan(coeffs[1] + 2.0*coeffs[2]*x_latency 
+              + 3.0*coeffs[3]*x_latency*x_latency);
+          //double epsi = -atan(coeffs[1] + 2.0*coeffs[2]*ptsx[0] 
+          //    + 3.0*coeffs[3]*ptsx[0]*ptsx[0]);
 
           Eigen::VectorXd state(6);
-          double v_ms = v*1609.0/3600.0;
-          state << v_ms*0.1, 0, 0, v_ms, cte, epsi;
+          state << x_latency, 0, 0, v_ms, cte, epsi;
           clock_t startTime = clock();
           auto vars = mpc.Solve(state, coeffs );
           double solveTime = (1.0*clock() - 1.0*startTime)/CLOCKS_PER_SEC;
