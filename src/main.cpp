@@ -92,7 +92,10 @@ int main() {
           double py = j[1]["y"];
           double psi = j[1]["psi"];
           double psi_unity = j[1]["psi_unity"];
+          double delta = j[1]["steering_angle"];
           double v = j[1]["speed"];
+          double Lf = 2.67;
+          double a = j[1]["throttle"];
 
           for(int i = 0; i < ptsx.size(); i++)
           {
@@ -116,20 +119,33 @@ int main() {
           auto coeffs = polyfit(ptsx_vec, ptsy_vec, 3);
 
           double v_ms = v*1609.0/3600.0;
-          double x_latency = fabs(v_ms*0.105);
-          // The cross track error is calculated by evaluating at polynomial at x, f(x)
-          // and subtracting y.
-          double cte = polyeval(coeffs, x_latency);
 
-          // Due to the sign starting at 0, the orientation error is -f'(x).
-          // derivative of coeffs[0] + coeffs[1] * x -> coeffs[1]
-          double epsi = -atan(coeffs[1] + 2.0*coeffs[2]*x_latency 
-              + 3.0*coeffs[3]*x_latency*x_latency);
-          //double epsi = -atan(coeffs[1] + 2.0*coeffs[2]*ptsx[0] 
-          //    + 3.0*coeffs[3]*ptsx[0]*ptsx[0]);
+          //Calculate initial cte and epsi.
+          double cte = polyeval(coeffs, 0.0);
+          double epsi = atan(coeffs[1]);
+
+          double latency = 0.107; // 100ms + ~7ms processing delay
+          std::cout << "Delta: " << delta << std::endl;
+          std::cout << "Coeffs: " << coeffs[0] <<
+                       "," << coeffs[1] <<
+                       "," << coeffs[2] <<
+                       "," << coeffs[3] << std::endl;
 
           Eigen::VectorXd state(6);
-          state << x_latency, 0, 0, v_ms, cte, epsi;
+
+          //Reverse delta to account for difference in steering direction
+          delta *= -1.0;
+
+          //Use kinematic equations to calculation initial state after actuation latency.
+          px = v_ms*cos(delta)*latency;
+          py = v_ms*sin(delta)*latency;;
+          cte += v_ms*sin(epsi)*latency;
+          epsi += v_ms*delta*latency/Lf;
+          psi = v_ms*delta*latency/Lf;
+          v_ms += a*latency;
+
+          state << px, py, psi, v_ms, cte, epsi;
+
           clock_t startTime = clock();
           auto vars = mpc.Solve(state, coeffs );
           double solveTime = (1.0*clock() - 1.0*startTime)/CLOCKS_PER_SEC;

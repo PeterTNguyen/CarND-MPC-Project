@@ -6,8 +6,8 @@
 using CppAD::AD;
 
 // TODO: Set the timestep length and duration
-size_t N = 8;
-double dt = 0.15;
+size_t N = 12;
+double dt = 0.1;
 
 // This value assumes the model presented in the classroom is used.
 //
@@ -51,15 +51,15 @@ class FG_eval {
 
     // The part of the cost based on the reference state.
     for (int t = 0; t < N; t++) {
-      fg[0] += 100.0*CppAD::pow(vars[cte_start + t], 2);
-      fg[0] += 750.0*CppAD::pow(vars[epsi_start + t], 2);
-      fg[0] += 0.25*CppAD::pow(vars[v_start + t] - ref_v, 2);
+      fg[0] += 150.0*CppAD::pow(vars[cte_start + t], 2);
+      fg[0] += 7500.0*CppAD::pow(vars[epsi_start + t], 2);
+      fg[0] += 0.1*CppAD::pow(vars[v_start + t] - ref_v, 2);
     }
 
     // Minimize the use of actuators.
     for (int t = 0; t < N - 1; t++) {
       fg[0] += 25.0*CppAD::pow(vars[delta_start + t], 2);
-      fg[0] += 0.1*CppAD::pow(vars[a_start + t], 2);
+      fg[0] += 1.0*CppAD::pow(vars[a_start + t], 2);
     }
 
     // Minimize the value gap between sequential actuations.
@@ -107,13 +107,13 @@ class FG_eval {
       AD<double> delta0 = vars[delta_start + t - 1];
       AD<double> a0 = vars[a_start + t - 1];
 
-      AD<double> f0 = 0.0;
+      /*AD<double> f0 = 0.0;
       for(int i =0 ; i < coeffs.size(); i++)
       {
         f0 = f0 + coeffs[i] * CppAD::pow(x0, i);
-      }
-      AD<double> psides0 = CppAD::atan(coeffs[1] + 2.0*coeffs[2]*x0 +
-          3.0*coeffs[3]*x0*x0);
+      }*/
+      AD<double> f0 = coeffs[0] + coeffs[1]*x0 + coeffs[2]*x0*x0 + coeffs[3]*x0*x0*x0;
+      AD<double> psides0 = CppAD::atan(coeffs[1] + 2.0*coeffs[2]*x0 + 3.0*coeffs[3]*x0*x0);
 
       // Here's `x` to get you started.
       // The idea here is to constraint this value to be 0.
@@ -130,7 +130,7 @@ class FG_eval {
       fg[1 + psi_start + t] = psi1 - (psi0 + v0 * delta0 / Lf * dt);
       fg[1 + v_start + t] = v1 - (v0 + a0 * dt);
       fg[1 + cte_start + t] = cte1 - ((f0 - y0 ) + (v0 * CppAD::sin(epsi0) * dt));
-      fg[1 + epsi_start + t] = epsi1 - ((psi0 - psides0) - v0 * delta0 / Lf * dt);
+      fg[1 + epsi_start + t] = epsi1 - ((psides0 - psi0) + v0 * delta0 / Lf * dt);
     }
   }
 };
