@@ -57,10 +57,15 @@ The MPC is an essential system of the SDC that, similar to localization, is a re
 For the predictive portion of MPC, the intial state, update equations, and an optimizer with a cost function are used. The update equations for x, y, v, and psi are based off the kinematic equations. The error update equations also use kinematics to project where the error will be based on the previous state. The erorr psi update equation is different than from the lesson which defines `epsi(t)=psi(t) - psides(t)` whereas I use `epsi(t)= psides(t) - psi(t)` since the cte update is also in the form of desired - actual.
 
 >`x(t+1) = x(t) + v(t)*cos(psi(t))*dt`
+
 >`y(t+1) = y(t) + v(t)*sin(psi(t))*dt`
+
 >`psi(t+1) = psi(t) + v(t)*delta(t)*dt/Lf`
+
 >`v(t+1) = v(t) + a(t)*dt`
+
 >`cte(t+1) = y(t) - f(x(t)) + v(t)*sin(epsi(t)*dt)`
+
 >`epsi(t+1) = psides(t) - psi(t) + v(t)*delta(t)*dt/Lf`
 
 To account for latency, the initial state can be used to account for the trajectory during the delay. After the coordinates are all transformed to the car's coordinate system, we first want to consider the state at the origin where px=py=psi=0. The cte and epsi can be calculated using the polynomial and polynomial derivative, although most of the terms are zeroed since px=0. From there, the car's steering angle can be used with the state at the car's origin to calculate the state after the latency using the kinematic model.
